@@ -8,13 +8,14 @@ import torch
 import random
 import os
 from collections import namedtuple
-from torch._six import queue
+# from torch._six import queue
 from torch._utils import ExceptionWrapper
 from . import signal_handling, MP_STATUS_CHECK_INTERVAL, IS_WINDOWS
 
 if IS_WINDOWS:
     import ctypes
     from ctypes.wintypes import DWORD, BOOL, HANDLE
+
 
     # On Windows, the parent ID of the worker process remains unchanged when the manager process
     # is gone, and the only way to check it through OS is to let the worker have a process handle

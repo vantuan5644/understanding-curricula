@@ -16,26 +16,26 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import math
 
-
 __all__ = [
     'fc1000', 'fc500',
 ]
 
-
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class FcNet(nn.Module):
-    def __init__(self,hidden=1000):
+    def __init__(self, hidden=1000):
         super(FcNet, self).__init__()
         self.hidden = hidden
         self.conv1 = nn.Conv2d(3, 20, 1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(20* 16 * 16, hidden)
+        self.fc1 = nn.Linear(20 * 16 * 16, hidden)
         self.fc2 = nn.Linear(hidden, 10)
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = x.view(-1, 20 * 16 * 16)
@@ -43,10 +43,12 @@ class FcNet(nn.Module):
         x = self.fc2(x)
         return x
 
+
 def fc500():
     model = FcNet(hidden=500)
     return model
+
+
 def fc1000():
     model = FcNet(hidden=1000)
     return model
-

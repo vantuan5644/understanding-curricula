@@ -6,8 +6,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 __all__ = ['efficientnetB0']
+
 
 def swish(x):
     return x * x.sigmoid()

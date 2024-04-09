@@ -13,16 +13,13 @@ import atexit
 # old private location of the ExceptionWrapper that some users rely on:
 from torch._utils import ExceptionWrapper
 
-
 IS_WINDOWS = sys.platform == "win32"
-
 
 MP_STATUS_CHECK_INTERVAL = 5.0
 r"""Interval (in seconds) to check status of processes to avoid hanging in
     multiprocessing data loading. This is mainly used in getting data from
     another process, in which case we need to periodically check whether the
     sender is alive to prevent hanging."""
-
 
 python_exit_status = False
 r"""Whether Python is shutting down. This flag is guaranteed to be set before
@@ -39,7 +36,7 @@ def _set_python_exit_flag():
     global python_exit_status
     python_exit_status = True
 
-atexit.register(_set_python_exit_flag)
 
+atexit.register(_set_python_exit_flag)
 
 from . import worker, signal_handling, pin_memory, collate, fetch

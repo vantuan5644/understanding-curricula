@@ -21,14 +21,15 @@ url={https://openreview.net/forum?id=tW4QEInpni}
 This command is our standard setup (ResNet50 architecture with SGD Momentum and cosine scheduler) on CIFAR10 dataset with @ 100 epoch.
  
 ## Curricula includes curriculum, anti-curriculum and random-curriculum learning
-### curriculum: linear pacing function with paremeter a=0.2 and b=0.8
+### curriculum: linear pacing function with parameter a=0.2 and b=0.8
 ```python main_w_test.py --pacing-a 0.2 --pacing-b 0.8 --pacing-f linear --half```
-### anti-curriculum: linear pacing function with paremeter a=0.2 and b=0.8
+### anti-curriculum: linear pacing function with parameter a=0.2 and b=0.8
 ``` python main_w_test.py --pacing-a 0.2 --pacing-b 0.8 --pacing-f linear --ordering anti-curr --half```
-### random-curriculum: linear pacing function with paremeter a=0.2 and b=0.8
+### random-curriculum: linear pacing function with parameter a=0.2 and b=0.8
 ``` python main_w_test.py --pacing-a 0.2 --pacing-b 0.8 --pacing-f linear --ordering random --half```
 
-###### Note  "main_wo_test.py" contains no test set but validation set only, while "main_w_test.py" contains validation and test dataset. Our paper uses the best validation accuracy to pick the corresponding test performance (i.e., main_w_test.py).
+###### Note  "main_wo_test.py" contains no test set but validation set only, while "main_w_test.py" contains validation and test dataset. 
+Our paper uses the best validation accuracy to pick the corresponding test performance (i.e., main_w_test.py).
 
 
 ### options:

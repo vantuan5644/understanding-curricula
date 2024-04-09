@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-__all__ = ['wrn', 'wresnet28x10','wresnet40x10']
+__all__ = ['wrn', 'wresnet28x10', 'wresnet40x10']
+
 
 class BasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride, dropRate=0.0):
@@ -19,7 +20,8 @@ class BasicBlock(nn.Module):
         self.droprate = dropRate
         self.equalInOut = (in_planes == out_planes)
         self.convShortcut = (not self.equalInOut) and nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
-                               padding=0, bias=False) or None
+                                                                padding=0, bias=False) or None
+
     def forward(self, x):
         if not self.equalInOut:
             x = self.relu1(self.bn1(x))
@@ -31,22 +33,26 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         return torch.add(x if self.equalInOut else self.convShortcut(x), out)
 
+
 class NetworkBlock(nn.Module):
     def __init__(self, nb_layers, in_planes, out_planes, block, stride, dropRate=0.0):
         super(NetworkBlock, self).__init__()
         self.layer = self._make_layer(block, in_planes, out_planes, nb_layers, stride, dropRate)
+
     def _make_layer(self, block, in_planes, out_planes, nb_layers, stride, dropRate):
         layers = []
         for i in range(nb_layers):
             layers.append(block(i == 0 and in_planes or out_planes, out_planes, i == 0 and stride or 1, dropRate))
         return nn.Sequential(*layers)
+
     def forward(self, x):
         return self.layer(x)
+
 
 class WideResNet(nn.Module):
     def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0):
         super(WideResNet, self).__init__()
-        nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
+        nChannels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
         assert (depth - 4) % 6 == 0, 'depth should be 6n+4'
         n = (depth - 4) // 6
         block = BasicBlock
@@ -85,6 +91,7 @@ class WideResNet(nn.Module):
         out = out.view(-1, self.nChannels)
         return self.fc(out)
 
+
 def wrn(**kwargs):
     """
     Constructs a Wide Residual Networks.
@@ -96,6 +103,7 @@ def wrn(**kwargs):
 def wresnet28x10(num_classes=10, nchannels=3):
     model = WideResNet(28, num_classes, widen_factor=10)
     return model
+
 
 def wresnet40x10(num_classes=10, nchannels=3):
     model = WideResNet(40, num_classes, widen_factor=10)

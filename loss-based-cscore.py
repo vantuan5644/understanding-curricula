@@ -34,6 +34,7 @@ from utils import LossTracker
 import collections
 import numpy as np
 import subprocess
+
 parser = argparse.ArgumentParser(description='PyTorch Training')
 
 parser.add_argument('--datadir', default='dataset',
@@ -73,61 +74,65 @@ parser.add_argument('--rand_fraction', default=0., type=float,
 args = parser.parse_args()
 
 """the code is based on  https://github.com/pluskid/structural-regularity"""
+
+
 def main():
-    tr_set = get_dataset(args.dataset, args.datadir, 'train',rand_fraction=args.rand_fraction)
+    tr_set = get_dataset(args.dataset, args.datadir, 'train', rand_fraction=args.rand_fraction)
     if args.dataset in ['cifar10', 'cifar100', 'cifar100N']:
         tr_set_clean = tr_set
     else:
-        print ("ERROR: the dataset %s is not found "%(args.dataset))
+        print("ERROR: the dataset %s is not found " % (args.dataset))
     if 'cifar100N' == args.dataset:
         if args.rand_fraction == 0.2:
             name = 'cifar100N02'
         if args.rand_fraction == 0.4:
             name = 'cifar100N04'
         if args.rand_fraction == 0.6:
-            name = 'cifar100N06'            
+            name = 'cifar100N06'
         if args.rand_fraction == 0.8:
             name = 'cifar100N08'
     else:
         name = args.dataset
-        
+
     order = [i for i in range(len(tr_set))]
-    ind_loss  = collections.defaultdict(list)
+    ind_loss = collections.defaultdict(list)
     for i_run in range(args.num_runs):
         random.shuffle(order)
         startIter = 0
         for i in range(4):
-            if i==3:
+            if i == 3:
                 startIter_next = len(tr_set)
-            else: 
-                startIter_next = int(startIter+1/4*len(tr_set))
-            print ('i_run %s and order  =============> from %s to %s'%(i_run, startIter,startIter_next))
+            else:
+                startIter_next = int(startIter + 1 / 4 * len(tr_set))
+            print('i_run %s and order  =============> from %s to %s' % (i_run, startIter, startIter_next))
             valsets = Subset(tr_set_clean, list(order[startIter:startIter_next]))
-            trainsets = Subset(tr_set, list(order[0:startIter])+list(order[startIter_next:]))
+            trainsets = Subset(tr_set, list(order[0:startIter]) + list(order[startIter_next:]))
             train_loader = torch.utils.data.DataLoader(trainsets, batch_size=args.batchsize,
-                              shuffle=True, num_workers=args.workers, pin_memory=True) 
+                                                       shuffle=True, num_workers=args.workers, pin_memory=True)
             val_loader = torch.utils.data.DataLoader(valsets, batch_size=args.batchsize,
-                              shuffle=False, num_workers=args.workers, pin_memory=True) 
-            
-            ind_loss = subset_train(i_run,tr_set,train_loader,val_loader,list(order[startIter:startIter_next]),ind_loss,args)
-            startIter += int(1/4*len(tr_set))
-            
-        stat = {k:[torch.mean(torch.tensor(v)),torch.std(torch.tensor(v))] for k, v in sorted(ind_loss.items(), key=lambda item:sum(item[1]))}
-        if i_run == args.num_runs-1:
-            torch.save(stat, os.path.join(args.logdir,name+'.order.pth'))
+                                                     shuffle=False, num_workers=args.workers, pin_memory=True)
+
+            ind_loss = subset_train(i_run, tr_set, train_loader, val_loader, list(order[startIter:startIter_next]),
+                                    ind_loss, args)
+            startIter += int(1 / 4 * len(tr_set))
+
+        stat = {k: [torch.mean(torch.tensor(v)), torch.std(torch.tensor(v))] for k, v in
+                sorted(ind_loss.items(), key=lambda item: sum(item[1]))}
+        if i_run == args.num_runs - 1:
+            torch.save(stat, os.path.join(args.logdir, name + '.order.pth'))
         else:
-            torch.save(stat, os.path.join(args.logdir,name+'.order.'+str(i_run)+'.pth'))
-        
-    
-def subset_train(seed,tr_set,train_loader,val_loader,val_order,ind_loss,args):
+            torch.save(stat, os.path.join(args.logdir, name + '.order.' + str(i_run) + '.pth'))
+
+
+def subset_train(seed, tr_set, train_loader, val_loader, val_order, ind_loss, args):
     set_seed(seed)
     model = get_model(args.arch, tr_set.nchannels, tr_set.imsize, len(tr_set.classes), False)
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = get_optimizer(args.optimizer, model.parameters(), args.lr, args.momentum, args.wd)
     scheduler = get_scheduler(args.scheduler, optimizer, num_epochs=args.epochs)
     start_epoch = 0
-    
-    for epoch in range(start_epoch, start_epoch+args.epochs):
+
+    for epoch in range(start_epoch, start_epoch + args.epochs):
         loss_acc = 0
         for i, (images, target) in enumerate(train_loader):
             images, target = cuda_transfer(images, target)
@@ -136,11 +141,12 @@ def subset_train(seed,tr_set,train_loader,val_loader,val_order,ind_loss,args):
             loss_acc += loss.item()
             optimizer.zero_grad()
             loss.backward()
-            optimizer.step()  
-        print ('train at epoch %s with loss %f'%(epoch,loss_acc))
-    return validate(val_loader, model, nn.CrossEntropyLoss(reduction="none").cuda(),val_order,ind_loss)
+            optimizer.step()
+        print('train at epoch %s with loss %f' % (epoch, loss_acc))
+    return validate(val_loader, model, nn.CrossEntropyLoss(reduction="none").cuda(), val_order, ind_loss)
 
-def validate(val_loader,model,criterion,val_order,ind_loss):
+
+def validate(val_loader, model, criterion, val_order, ind_loss):
     # switch to evaluate mode
     model.eval()
     start = 0
@@ -150,29 +156,30 @@ def validate(val_loader,model,criterion,val_order,ind_loss):
             images, target = cuda_transfer(images, target)
             output = model(images)
             indloss = criterion(output, target)
-            list(map(lambda a, b : ind_loss[a].append(b), val_order[start:start+len(target)], indloss)) 
+            list(map(lambda a, b: ind_loss[a].append(b), val_order[start:start + len(target)], indloss))
             start += len(target)
             loss_acc += torch.sum(indloss).item()
-        print ('test with loss %f'%(loss_acc))
+        print('test with loss %f' % (loss_acc))
     return ind_loss
 
+
 def set_seed(seed=None):
-  if seed is not None:
-      random.seed(seed)
-      torch.manual_seed(seed)
-      torch.backends.cudnn.deterministic = True
-      warnings.warn('You have chosen to seed training. '
-                    'This will turn on the CUDNN deterministic setting, '
-                    'which can slow down your training considerably! '
-                    'You may see unexpected behavior when restarting '
-                    'from checkpoints.')
+    if seed is not None:
+        random.seed(seed)
+        torch.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
+        warnings.warn('You have chosen to seed training. '
+                      'This will turn on the CUDNN deterministic setting, '
+                      'which can slow down your training considerably! '
+                      'You may see unexpected behavior when restarting '
+                      'from checkpoints.')
+
 
 def cuda_transfer(images, target):
-  images = images.cuda(non_blocking=True)
-  target = target.type(torch.LongTensor).cuda(non_blocking=True)
-  return images, target
+    images = images.cuda(non_blocking=True)
+    target = target.type(torch.LongTensor).cuda(non_blocking=True)
+    return images, target
 
 
 if __name__ == '__main__':
     main()
-

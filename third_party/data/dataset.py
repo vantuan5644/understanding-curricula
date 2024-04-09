@@ -223,6 +223,7 @@ class ChainDataset(IterableDataset):
     Arguments:
         datasets (iterable of IterableDataset): datasets to be chained together
     """
+
     def __init__(self, datasets):
         super(ChainDataset, self).__init__()
         self.datasets = datasets
@@ -249,6 +250,7 @@ class Subset(Dataset):
         dataset (Dataset): The whole Dataset
         indices (sequence): Indices in the whole set selected for subset
     """
+
     def __init__(self, dataset, indices):
         self.dataset = dataset
         self.indices = indices
@@ -276,4 +278,4 @@ def random_split(dataset, lengths, generator=default_generator):
         raise ValueError("Sum of input lengths does not equal the length of the input dataset!")
 
     indices = randperm(sum(lengths), generator=generator).tolist()
-    return [Subset(dataset, indices[offset - length : offset]) for offset, length in zip(_accumulate(lengths), lengths)]
+    return [Subset(dataset, indices[offset - length: offset]) for offset, length in zip(_accumulate(lengths), lengths)]
